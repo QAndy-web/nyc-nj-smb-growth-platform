@@ -1,5 +1,5 @@
-import { LeadDashboard } from "../components/lead-dashboard";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <LeadDashboard />;
+  redirect("/dashboard");
 }

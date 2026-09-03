@@ -11,7 +11,7 @@ Build the NYC + NJ SMB Website Growth Platform as a production-quality system th
 - Keep modules independently testable and observable.
 - Preserve provider terms and rate limits. Add retries/backoff and idempotent ingestion.
 
-## Current phase: Phase 1 Lead Engine
+## Current phase: Phase 1 Lead Engine + Sprint 1 Growth OS foundation
 Implement the following production-ready foundation:
 1. Monorepo app foundation using the existing pnpm/Turborepo structure.
 2. Supabase/Postgres schema for businesses, scans, website audits, contact sources, scores, and ingestion runs.
@@ -23,6 +23,8 @@ Implement the following production-ready foundation:
 8. Admin dashboard backed by real persisted data with filters for territory, category, website status, tier, opportunity score, rating, review count, and email availability.
 9. CSV export.
 10. Tests, validation, logs, error handling, and developer documentation.
+11. Preserve the Lead Engine while adding dashboard, pipeline-stage, agent-job and project-tracking foundations.
+12. Agent execution must use one orchestrator plus explicit specialist contracts; demo sharing, outreach sending and production launch require human approval.
 
 ## Geographic scope
 NYC: Manhattan, Brooklyn, Queens, Bronx, Staten Island.

@@ -15,7 +15,7 @@ function buildQuery(filters: LeadFilters): string {
 }
 
 function titleCase(value: string | null): string {
-  return value ? value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "—";
+  return value ? value.replace(/[-_]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "—";
 }
 
 export function LeadDashboard() {
@@ -98,8 +98,8 @@ export function LeadDashboard() {
       <header className="topbar">
         <div className="brandMark" aria-hidden="true"><span>NY</span><span>NJ</span></div>
         <div className="brandCopy">
-          <p className="eyebrow">Phase 1 · Lead intelligence</p>
-          <h1>Opportunity Radar</h1>
+          <p className="eyebrow">Lead discovery → sales pipeline</p>
+          <h1>Lead pipeline</h1>
         </div>
         <div className="systemStatus"><i /> Lead engine ready</div>
       </header>
@@ -185,6 +185,12 @@ export function LeadDashboard() {
                 <option value="">Either</option><option value="yes">Available</option><option value="no">Not found</option>
               </select>
             </label>
+            <label>Pipeline stage
+              <select value={filters.pipelineStage ?? ""} onChange={(event) => setFilters({ ...filters, pipelineStage: event.target.value || undefined })}>
+                <option value="">All stages</option>
+                {["discovered", "qualified", "audit_ready", "demo_ready", "outreach_draft", "contacted", "replied", "meeting", "proposal", "won", "lost"].map((stage) => <option value={stage} key={stage}>{titleCase(stage)}</option>)}
+              </select>
+            </label>
           </div>
           <div className="filterActions">
             <button className="primary" onClick={applyFilters}>Apply filters</button>
@@ -205,7 +211,7 @@ export function LeadDashboard() {
           {!error && rows.length > 0 ? (
             <div className="tableScroll">
               <table>
-                <thead><tr><th>Business</th><th>Market</th><th>Signals</th><th>Website</th><th>Score</th><th>Public contact</th></tr></thead>
+                <thead><tr><th>Business</th><th>Market</th><th>Signals</th><th>Website</th><th>Score</th><th>Stage</th><th>Public contact</th></tr></thead>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.id}>
@@ -214,6 +220,7 @@ export function LeadDashboard() {
                       <td><strong>{row.rating ? `${Number(row.rating).toFixed(1)} ★` : "No rating"}</strong><span>{row.review_count.toLocaleString()} reviews</span></td>
                       <td><span className={`statusPill status-${row.website_status ?? "unknown"}`}>{titleCase(row.website_status)}</span>{row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer">Visit site ↗</a> : <span>No URL listed</span>}</td>
                       <td><div className={`tier tier-${row.tier ?? "C"}`}>{row.tier ?? "—"}</div><strong>{row.opportunity_score ?? "—"}<small>/100</small></strong></td>
+                      <td><span className="statusPill status-unknown">{titleCase(row.pipeline_stage ?? "discovered")}</span><span>{titleCase(row.pipeline_status ?? "active")}</span></td>
                       <td>{row.primary_email ? <><a href={`mailto:${row.primary_email}`}>{row.primary_email}</a>{row.email_source_url ? <a href={row.email_source_url} target="_blank" rel="noreferrer">Verify source ↗</a> : null}</> : <span>Not found</span>}</td>
                     </tr>
                   ))}

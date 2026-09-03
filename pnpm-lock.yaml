@@ -20,6 +20,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@growth/agent-core':
+        specifier: workspace:*
+        version: link:../../packages/agent-core
       '@growth/lead-engine':
         specifier: workspace:*
         version: link:../../packages/lead-engine
@@ -57,6 +60,15 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
+
+  packages/agent-core:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)(supports-color@7.2.0)
 
   packages/lead-engine:
     dependencies:

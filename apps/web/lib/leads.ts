@@ -24,6 +24,9 @@ export type LeadRow = {
   email_count: number;
   primary_email: string | null;
   email_source_url: string | null;
+  pipeline_stage: "discovered" | "qualified" | "audit_ready" | "demo_ready" | "outreach_draft" | "contacted" | "replied" | "meeting" | "proposal" | "won" | "lost";
+  pipeline_status: "active" | "paused" | "closed";
+  stage_updated_at: string;
   last_seen_at: string;
 };
 
@@ -38,6 +41,7 @@ export type LeadFilters = {
   minRating?: number;
   minReviews?: number;
   email?: "yes" | "no";
+  pipelineStage?: string;
 };
 
 function optionalNumber(value: string | null): number | undefined {
@@ -60,6 +64,7 @@ export function parseLeadFilters(params: URLSearchParams): LeadFilters {
     minRating: optionalNumber(params.get("minRating")),
     minReviews: optionalNumber(params.get("minReviews")),
     email: email === "yes" || email === "no" ? email : undefined,
+    pipelineStage: value("pipelineStage"),
   };
 }
 
@@ -81,6 +86,7 @@ export async function listLeads(filters: LeadFilters, limit = 500) {
   if (filters.minRating !== undefined) query = query.gte("rating", filters.minRating);
   if (filters.minReviews !== undefined) query = query.gte("review_count", filters.minReviews);
   if (filters.email) query = query.eq("has_email", filters.email === "yes");
+  if (filters.pipelineStage) query = query.eq("pipeline_stage", filters.pipelineStage);
 
   const { data, error, count } = await query;
   if (error) throw new Error(`Could not load leads: ${error.message}`);
@@ -106,6 +112,7 @@ export function leadsToCsv(rows: LeadRow[]): string {
     ["website_url", "website_url"],
     ["opportunity_score", "opportunity_score"],
     ["tier", "tier"],
+    ["pipeline_stage", "pipeline_stage"],
     ["public_email", "primary_email"],
     ["email_source_url", "email_source_url"],
     ["phone", "phone"],

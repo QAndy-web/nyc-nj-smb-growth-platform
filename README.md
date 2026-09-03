@@ -1,8 +1,8 @@
 # NYC + NJ SMB Growth Platform
 
-Phase 1 is a working lead engine for finding strong NYC and New Jersey local businesses with weak digital presence. It scans configured market cells with Google Places, persists canonical businesses in Supabase/Postgres, audits listed websites, discovers public business emails from official pages, scores the opportunity, and exposes the result in a filterable admin dashboard with CSV export.
+Phase 1 is a working lead engine for finding strong NYC and New Jersey local businesses with weak digital presence. The current Sprint adds the Local Business Growth OS shell around it: Dashboard, Lead Pipeline, typed Orchestrator/specialist job contracts, a persistent agent-job queue boundary, and a Project Tracker foundation.
 
-Automated outreach, payments, demo-site generation, client websites, SEO execution, and recurring maintenance are intentionally outside this phase.
+Automated outreach, payments, autonomous demo publishing, client-site deployment, SEO execution, and recurring maintenance are intentionally outside this phase. Outreach remains draft-only and human-approved.
 
 ## What is included
 
@@ -16,6 +16,8 @@ Automated outreach, payments, demo-site generation, client websites, SEO executi
 - Business Quality, Digital Weakness, Revenue Potential, Opportunity Score, and S/A/B/C tiers
 - Persisted lead dashboard with every Phase 1 filter and CSV export
 - Unit tests for scoring, parsing, retry behavior, website audits, and provider-independent ingestion
+- Durable lead pipeline stages, delivery projects, and idempotent agent jobs
+- One Orchestrator plus Scout, Audit, Demo Generator, Outreach Drafter, and Project Tracker contracts
 
 ## Prerequisites
 
@@ -40,7 +42,7 @@ Automated outreach, payments, demo-site generation, client websites, SEO executi
 
    `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it through a `NEXT_PUBLIC_` variable or commit `.env.local`.
 
-3. Apply `supabase/migrations/202608310001_phase1_lead_engine.sql`. With a linked Supabase CLI project:
+3. Apply both migrations in filename order. With a linked Supabase CLI project:
 
    ```bash
    supabase db push
@@ -88,3 +90,12 @@ pnpm build
 - `supabase/migrations`: explicit relational schema, indexes, RLS, and the dashboard view
 
 See [Phase 1 architecture](docs/phase-1-architecture.md) for data flow, provider behavior, and known limits.
+
+Growth OS planning documents:
+
+- [MVP PRD](docs/mvp-prd.md)
+- [System architecture](docs/system-architecture.md)
+- [Database schema](docs/database-schema.md)
+- [Page structure](docs/page-structure.md)
+- [Agent contracts](docs/agent-contracts.md)
+- [Sprint 1 backlog](docs/sprint-1-backlog.md)

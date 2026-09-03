@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@growth/agent-core": "workspace:*",
     "@growth/lead-engine": "workspace:*",
     "@growth/scoring": "workspace:*",
     "@supabase/supabase-js": "^2.57.0",
