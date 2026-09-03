@@ -18,6 +18,7 @@ Automated outreach, payments, autonomous demo publishing, client-site deployment
 - Unit tests for scoring, parsing, retry behavior, website audits, and provider-independent ingestion
 - Durable lead pipeline stages, delivery projects, and idempotent agent jobs
 - One Orchestrator plus Scout, Audit, Demo Generator, Outreach Drafter, and Project Tracker contracts
+- Project-scoped execution guidance for bounded planning, architecture review, checkpoint reporting, verification, and retry limits
 
 ## Prerequisites
 
@@ -99,3 +100,4 @@ Growth OS planning documents:
 - [Page structure](docs/page-structure.md)
 - [Agent contracts](docs/agent-contracts.md)
 - [Sprint 1 backlog](docs/sprint-1-backlog.md)
+- [Project skills and security review](.agents/skills/README.md)

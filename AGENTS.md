@@ -45,3 +45,13 @@ Dentists, med spas, lawyers, accountants, HVAC, plumbers, electricians, contract
 
 ## Working style
 Before major changes, inspect the repository and existing code. Prefer small coherent commits. When implementing a task, update docs if architecture or setup changes. Do not remove existing work unless required. If an assumption is uncertain, choose the safest extensible implementation and document it.
+
+## Execution discipline
+- Before implementation, report the current objective, intended scope, short plan, and how success will be verified.
+- Load only the specification sections, source files, tests, and error excerpts needed for the current step. Do not repeatedly read unchanged material.
+- Work in small, independently verifiable increments. After each completed checkpoint, report: completed work, verification evidence, and the next step.
+- Keep a compact record of failed attempts and conclusions. Do not repeat the same unsuccessful hypothesis more than twice; reassess the root cause or design before another attempt.
+- Do not rerun an already successful check when neither its inputs nor relevant code changed. Do not claim completion without fresh evidence from the checks appropriate to the change.
+
+## Project skills
+Project-scoped operating guidance lives in `.agents/skills/`. Load only the skill(s) relevant to the current task and keep this file's product, privacy, approval, and quality rules authoritative. The library is documented in `.agents/skills/README.md`; do not add a duplicate skill without first recording why the existing one is insufficient.
