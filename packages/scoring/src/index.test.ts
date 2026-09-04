@@ -13,6 +13,11 @@ describe("scoreLead", () => {
 
     expect(score.businessQuality).toBeGreaterThan(85);
     expect(score.digitalWeakness).toBe(100);
+    expect(score.fit).toBe(score.businessQuality);
+    expect(score.need).toBe(score.digitalWeakness);
+    expect(score.reachability).toBe(100);
+    expect(score.value).toBe(score.revenuePotential);
+    expect(score.confidence).toBe(100);
     expect(score.tier).toBe("S");
   });
 
@@ -52,5 +57,27 @@ describe("scoreLead", () => {
     });
 
     expect(score.revenuePotential).toBe(82);
+    expect(score.value).toBe(82);
+  });
+
+  it("explains reachability without changing the legacy opportunity formula", () => {
+    const withPhone = scoreLead({
+      rating: 4.5,
+      reviewCount: 100,
+      websiteStatus: "unknown",
+      phoneAvailable: true,
+      categoryValue: "medium",
+    });
+    const withoutContact = scoreLead({
+      rating: 4.5,
+      reviewCount: 100,
+      websiteStatus: "unknown",
+      categoryValue: "medium",
+    });
+
+    expect(withPhone.opportunity).toBe(withoutContact.opportunity);
+    expect(withPhone.reachability).toBe(65);
+    expect(withoutContact.reachability).toBe(25);
+    expect(withPhone.confidence).toBe(65);
   });
 });

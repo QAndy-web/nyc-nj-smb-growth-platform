@@ -1,9 +1,13 @@
-import type { AgentJobStatus, AgentType, CreateAgentJobRequest } from "@growth/agent-core";
+import type { ActionName, AgentActionContext, AgentJobStatus, AgentType, CreateAgentJobRequest } from "@growth/agent-core";
 import { createAdminClient } from "./supabase";
 
 export type AgentJobRow = {
   id: string;
   agent_type: AgentType;
+  action_name: ActionName;
+  action_context: AgentActionContext;
+  evidence_ids: string[];
+  approval_id: string | null;
   status: AgentJobStatus;
   business_id: string | null;
   project_id: string | null;
@@ -30,6 +34,10 @@ export async function createAgentJob(request: CreateAgentJobRequest): Promise<Ag
   const idempotencyKey = request.idempotencyKey ?? crypto.randomUUID();
   const row = {
     agent_type: request.agentType,
+    action_name: request.action,
+    action_context: request.actionContext ?? {},
+    evidence_ids: request.actionContext?.evidenceIds ?? [],
+    approval_id: request.actionContext?.approvalId ?? null,
     business_id: request.businessId ?? null,
     project_id: request.projectId ?? null,
     input_payload: request.input,

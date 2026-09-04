@@ -1,4 +1,4 @@
-import { AGENT_TYPES, parseCreateAgentJobRequest, type AgentJobStatus, type AgentType } from "@growth/agent-core";
+import { ACTION_REGISTRY, AGENT_TYPES, parseCreateAgentJobRequest, type AgentJobStatus, type AgentType } from "@growth/agent-core";
 import { createAgentJob, listAgentJobs } from "../../../lib/agent-jobs";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,13 @@ export async function POST(request: Request) {
 
   try {
     const job = await createAgentJob(body);
-    return Response.json({ job, execution: "queued", humanReviewRequired: ["demo_generator", "outreach_drafter"].includes(job.agent_type) }, { status: 202 });
+    const action = ACTION_REGISTRY[job.action_name];
+    return Response.json({
+      job,
+      execution: "queued",
+      humanReviewRequired: action.approvalPolicy !== "none" || ["demo_generator", "outreach_drafter"].includes(job.agent_type),
+      externalEffect: action.externalEffect,
+    }, { status: 202 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not queue agent job";
     return Response.json({ error: message }, { status: 503 });

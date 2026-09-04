@@ -1,13 +1,16 @@
-export const AGENT_TYPES = [
-  "orchestrator",
-  "scout",
-  "audit",
-  "demo_generator",
-  "outreach_drafter",
-  "project_tracker",
-] as const;
+import {
+  ACTION_NAMES,
+  ACTION_REGISTRY,
+  AGENT_TYPES,
+  DEFAULT_AGENT_ACTION,
+  validateAgentAction,
+  type ActionName,
+  type AgentActionContext,
+  type AgentType,
+} from "@growth/ontology";
 
-export type AgentType = (typeof AGENT_TYPES)[number];
+export { ACTION_NAMES, ACTION_REGISTRY, AGENT_TYPES, DEFAULT_AGENT_ACTION } from "@growth/ontology";
+export type { ActionName, AgentActionContext, AgentType } from "@growth/ontology";
 export type AgentJobStatus = "queued" | "running" | "needs_review" | "succeeded" | "failed" | "cancelled";
 
 export type AgentContractMap = {
@@ -39,6 +42,8 @@ export type AgentContractMap = {
 
 export type CreateAgentJobRequest = {
   agentType: AgentType;
+  action: ActionName;
+  actionContext?: AgentActionContext;
   businessId?: string;
   projectId?: string;
   input: Record<string, unknown>;
@@ -72,6 +77,34 @@ function optionalUuid(value: unknown, field: string): string | undefined {
   return value;
 }
 
+function optionalStringArray(value: unknown, field: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.trim().length === 0)) {
+    throw new Error(`${field} must be an array of non-empty strings.`);
+  }
+  return value.map((item) => item.trim());
+}
+
+function parseActionContext(value: unknown): AgentActionContext | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) throw new Error("actionContext must be a JSON object.");
+  const optionalString = (field: string) => {
+    const fieldValue = value[field];
+    if (fieldValue === undefined) return undefined;
+    if (typeof fieldValue !== "string" || fieldValue.trim().length === 0) {
+      throw new Error(`actionContext.${field} must be a non-empty string.`);
+    }
+    return fieldValue.trim();
+  };
+  return {
+    entityType: optionalString("entityType") as AgentActionContext["entityType"],
+    currentState: optionalString("currentState"),
+    targetState: optionalString("targetState"),
+    evidenceIds: optionalStringArray(value.evidenceIds, "actionContext.evidenceIds"),
+    approvalId: optionalString("approvalId"),
+  };
+}
+
 export function parseCreateAgentJobRequest(value: unknown): CreateAgentJobRequest {
   if (!isRecord(value)) throw new Error("Request body must be a JSON object.");
   if (typeof value.agentType !== "string" || !AGENT_TYPES.includes(value.agentType as AgentType)) {
@@ -80,6 +113,18 @@ export function parseCreateAgentJobRequest(value: unknown): CreateAgentJobReques
   if (!isRecord(value.input)) throw new Error("input must be a JSON object.");
 
   const agentType = value.agentType as AgentType;
+  const hasExplicitAction = value.action !== undefined;
+  const action = !hasExplicitAction
+    ? DEFAULT_AGENT_ACTION[agentType]
+    : typeof value.action === "string" && ACTION_NAMES.includes(value.action as ActionName)
+      ? value.action as ActionName
+      : undefined;
+  if (!action) throw new Error(`action must be one of: ${ACTION_NAMES.join(", ")}.`);
+  const actionContext = parseActionContext(value.actionContext);
+  // Legacy queue envelopes remain accepted and are assigned their safest
+  // producer action. Explicit state-changing actions always cross the full
+  // permission, evidence and transition boundary.
+  if (hasExplicitAction || actionContext) validateAgentAction(agentType, action, actionContext);
   const businessId = optionalUuid(value.businessId, "businessId");
   const projectId = optionalUuid(value.projectId, "projectId");
   if (["audit", "demo_generator", "outreach_drafter"].includes(agentType) && !businessId) {
@@ -99,6 +144,8 @@ export function parseCreateAgentJobRequest(value: unknown): CreateAgentJobReques
 
   return {
     agentType,
+    action,
+    actionContext,
     businessId,
     projectId,
     input: value.input,

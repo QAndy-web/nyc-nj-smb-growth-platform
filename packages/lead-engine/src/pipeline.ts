@@ -131,6 +131,7 @@ export async function runIngestion(
                 mobileFriendly: websiteAudit.mobileFriendly,
                 hasClearCta: websiteAudit.hasClearCta,
                 publicEmailFound: enrichment.contacts.length > 0,
+                phoneAvailable: Boolean(place.phone),
               });
               await dependencies.repository.saveScore(businessId, score);
               await dependencies.repository.markBusinessQualityVerified(businessId);

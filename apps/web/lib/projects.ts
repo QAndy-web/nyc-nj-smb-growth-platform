@@ -14,6 +14,9 @@ export type ProjectRow = {
   business_name: string;
   city: string;
   state: "NY" | "NJ";
+  opportunity_id: string | null;
+  sales_stage: "not_started" | "outreach_ready" | "contacted" | "replied" | "meeting" | "proposal" | "won" | "lost" | null;
+  pending_approval_count: number;
 };
 
 export async function listProjects(limit = 100): Promise<ProjectRow[]> {

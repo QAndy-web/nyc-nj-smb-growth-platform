@@ -30,6 +30,18 @@ export type LeadRow = {
   lead_quality_status: "verified" | "needs_reaudit";
   quality_reason: string | null;
   quality_checked_at: string | null;
+  company_state: "discovered" | "identity_pending" | "verified" | "rejected" | "archived";
+  website_verification_status: "candidate" | "verified" | "rejected" | "unknown" | null;
+  contact_verification_status: "verified" | "unavailable";
+  opportunity_id: string | null;
+  qualification_state: "unassessed" | "screening" | "qualified" | "disqualified" | null;
+  sales_stage: "not_started" | "outreach_ready" | "contacted" | "replied" | "meeting" | "proposal" | "won" | "lost" | null;
+  fit_score: number | null;
+  need_score: number | null;
+  reachability_score: number | null;
+  value_score: number | null;
+  confidence_score: number | null;
+  pending_approval_count: number;
   last_seen_at: string;
 };
 
@@ -45,6 +57,9 @@ export type LeadFilters = {
   minReviews?: number;
   email?: "yes" | "no";
   pipelineStage?: string;
+  companyState?: string;
+  qualificationState?: string;
+  salesStage?: string;
 };
 
 function optionalNumber(value: string | null): number | undefined {
@@ -68,6 +83,9 @@ export function parseLeadFilters(params: URLSearchParams): LeadFilters {
     minReviews: optionalNumber(params.get("minReviews")),
     email: email === "yes" || email === "no" ? email : undefined,
     pipelineStage: value("pipelineStage"),
+    companyState: value("companyState"),
+    qualificationState: value("qualificationState"),
+    salesStage: value("salesStage"),
   };
 }
 
@@ -90,6 +108,9 @@ export async function listLeads(filters: LeadFilters, limit = 500) {
   if (filters.minReviews !== undefined) query = query.gte("review_count", filters.minReviews);
   if (filters.email) query = query.eq("has_email", filters.email === "yes");
   if (filters.pipelineStage) query = query.eq("pipeline_stage", filters.pipelineStage);
+  if (filters.companyState) query = query.eq("company_state", filters.companyState);
+  if (filters.qualificationState) query = query.eq("qualification_state", filters.qualificationState);
+  if (filters.salesStage) query = query.eq("sales_stage", filters.salesStage);
 
   const { data, error, count } = await query;
   if (error) throw new Error(`Could not load leads: ${error.message}`);
@@ -114,7 +135,15 @@ export function leadsToCsv(rows: LeadRow[]): string {
     ["website_status", "website_status"],
     ["website_url", "website_url"],
     ["opportunity_score", "opportunity_score"],
+    ["fit_score", "fit_score"],
+    ["need_score", "need_score"],
+    ["reachability_score", "reachability_score"],
+    ["value_score", "value_score"],
+    ["confidence_score", "confidence_score"],
     ["tier", "tier"],
+    ["company_state", "company_state"],
+    ["qualification_state", "qualification_state"],
+    ["sales_stage", "sales_stage"],
     ["pipeline_stage", "pipeline_stage"],
     ["public_email", "primary_email"],
     ["email_source_url", "email_source_url"],

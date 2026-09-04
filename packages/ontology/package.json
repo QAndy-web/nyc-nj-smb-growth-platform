@@ -1,5 +1,5 @@
 {
-  "name": "@growth/agent-core",
+  "name": "@growth/ontology",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,9 +7,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "@growth/ontology": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.2",

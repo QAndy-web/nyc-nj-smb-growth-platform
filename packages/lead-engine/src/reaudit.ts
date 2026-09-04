@@ -8,6 +8,7 @@ export type ExistingLeadForReaudit = {
   websiteUrl: string | null;
   rating: number | null;
   reviewCount: number;
+  phone?: string | null;
   categoryId: string;
 };
 
@@ -41,6 +42,7 @@ export async function reauditExistingLead(
     mobileFriendly: audit.mobileFriendly,
     hasClearCta: audit.hasClearCta,
     publicEmailFound: enrichment.contacts.length > 0,
+    phoneAvailable: Boolean(lead.phone),
   });
   await dependencies.repository.saveScore(lead.businessId, score);
   await dependencies.repository.markBusinessQualityVerified(lead.businessId);

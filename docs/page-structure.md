@@ -3,13 +3,15 @@
 ```text
 Growth OS
 ├── Dashboard            /dashboard
-│   ├── current Sprint focus
-│   ├── system readiness
-│   └── operating flow
-├── Lead Pipeline        /pipeline
+│   ├── verified Company state
+│   ├── qualified Opportunity + open sales counts
+│   ├── pending Approvals
+│   └── Observation → Fact → Opportunity → Approval → Delivery flow
+├── Pipeline             /pipeline
 │   ├── one-cell Scout trigger
-│   ├── metrics and filters
-│   ├── ranked leads + sales stage
+│   ├── Company / evidence / qualification / sales filters
+│   ├── legacy Opportunity Score + explainable components
+│   ├── independent qualification and sales stages
 │   └── CSV export
 ├── Agents               /agents
 │   ├── Orchestrator
@@ -17,11 +19,13 @@ Growth OS
 │   ├── Audit
 │   ├── Demo Generator
 │   ├── Outreach Drafter
-│   └── Project Tracker
+│   ├── Project Tracker
+│   └── action registry + human-only boundaries
 └── Projects             /projects
-    ├── active/blocked/completed state
+    ├── won Opportunity relationship
+    ├── active/blocked/completed delivery state
     ├── progress
     └── blocker + next action
 ```
 
-Sprint 1 intentionally keeps Agents in one operating surface. Separate specialist workbenches should be added only when real workflows require distinct controls. Lead and project detail drawers/pages are Sprint 2 candidates.
+This increment intentionally keeps Agents in one subordinate operating surface. Separate specialist workbenches should be added only when real workflows require distinct controls. Company, Opportunity and Project detail drawers/pages remain later candidates.

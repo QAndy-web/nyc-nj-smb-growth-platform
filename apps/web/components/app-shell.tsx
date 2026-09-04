@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 
 const NAVIGATION = [
   { href: "/dashboard", label: "Dashboard", caption: "Command center" },
-  { href: "/pipeline", label: "Lead Pipeline", caption: "Discover to close" },
-  { href: "/agents", label: "Agents", caption: "Jobs and review gates" },
+  { href: "/pipeline", label: "Pipeline", caption: "Company → opportunity" },
+  { href: "/agents", label: "Agents", caption: "Execution and permissions" },
   { href: "/projects", label: "Projects", caption: "Delivery tracker" },
 ] as const;
 

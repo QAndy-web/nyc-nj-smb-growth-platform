@@ -7,6 +7,8 @@ export type LeadInputs = {
   mobileFriendly?: boolean | null;
   hasClearCta?: boolean | null;
   publicEmailFound?: boolean;
+  phoneAvailable?: boolean;
+  evidenceConfidence?: number;
   categoryValue?: "low" | "medium" | "high";
   revenuePotential?: number;
 };
@@ -15,6 +17,11 @@ export type LeadScore = {
   businessQuality: number;
   digitalWeakness: number;
   revenuePotential: number;
+  fit: number;
+  need: number;
+  reachability: number;
+  value: number;
+  confidence: number;
   opportunity: number;
   tier: "S" | "A" | "B" | "C";
 };
@@ -68,6 +75,18 @@ export function scoreLead(
   const revenuePotential = clamp(
     input.revenuePotential ?? config.categoryValue[input.categoryValue ?? "medium"],
   );
+  const fit = businessQuality;
+  const need = digitalWeakness;
+  const reachability = input.publicEmailFound ? 100 : input.phoneAvailable ? 65 : 25;
+  const value = revenuePotential;
+  const confidence = clamp(
+    input.evidenceConfidence ??
+      40 +
+        (input.rating !== null && input.rating !== undefined ? 15 : 0) +
+        (input.reviewCount !== null && input.reviewCount !== undefined ? 10 : 0) +
+        (input.websiteStatus !== "unknown" ? 25 : 0) +
+        (input.publicEmailFound ? 10 : 0),
+  );
   const { opportunityWeights: weights } = config;
   const contactBonus = input.publicEmailFound ? 3 : 0;
   const opportunity = clamp(
@@ -87,5 +106,16 @@ export function scoreLead(
           ? "B"
           : "C";
 
-  return { businessQuality, digitalWeakness, revenuePotential, opportunity, tier };
+  return {
+    businessQuality,
+    digitalWeakness,
+    revenuePotential,
+    fit,
+    need,
+    reachability,
+    value,
+    confidence,
+    opportunity,
+    tier,
+  };
 }

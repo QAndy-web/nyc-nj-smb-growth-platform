@@ -1,6 +1,7 @@
 "use client";
 
 import { BUSINESS_CATEGORIES, TERRITORIES } from "@growth/lead-engine";
+import { COMPANY_STATES, OPPORTUNITY_QUALIFICATION_STATES, SALES_STAGES } from "@growth/ontology";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LeadFilters, LeadRow } from "../lib/leads";
 
@@ -54,10 +55,10 @@ export function LeadDashboard() {
 
   const metrics = useMemo(
     () => [
-      { label: "Matching leads", value: total.toLocaleString(), accent: "cyan" },
-      { label: "Tier S", value: rows.filter((row) => row.tier === "S").length.toLocaleString(), accent: "lime" },
-      { label: "Weak / no site", value: rows.filter((row) => row.website_status === "weak" || row.website_status === "missing").length.toLocaleString(), accent: "amber" },
-      { label: "Public emails", value: rows.filter((row) => row.has_email).length.toLocaleString(), accent: "violet" },
+      { label: "Matching companies", value: total.toLocaleString(), accent: "cyan" },
+      { label: "Verified companies", value: rows.filter((row) => row.company_state === "verified").length.toLocaleString(), accent: "lime" },
+      { label: "Qualified shown", value: rows.filter((row) => row.qualification_state === "qualified").length.toLocaleString(), accent: "amber" },
+      { label: "Pending approvals", value: rows.reduce((sum, row) => sum + row.pending_approval_count, 0).toLocaleString(), accent: "violet" },
     ],
     [rows, total],
   );
@@ -98,17 +99,17 @@ export function LeadDashboard() {
       <header className="topbar">
         <div className="brandMark" aria-hidden="true"><span>NY</span><span>NJ</span></div>
         <div className="brandCopy">
-          <p className="eyebrow">Lead discovery → sales pipeline</p>
-          <h1>Lead pipeline</h1>
+          <p className="eyebrow">Company identity → opportunity qualification → sales</p>
+          <h1>Company & opportunity pipeline</h1>
         </div>
-        <div className="systemStatus"><i /> Lead engine ready</div>
+        <div className="systemStatus"><i /> Compatibility layer on</div>
       </header>
 
       <section className="commandDeck" aria-labelledby="scan-heading">
         <div>
           <p className="eyebrow">Google Places ingestion</p>
           <h2 id="scan-heading">Scan one market cell</h2>
-          <p>Run a cost-controlled sample before expanding the grid.</p>
+          <p>Raw provider results are stored as observations before deterministic identity resolution.</p>
         </div>
         <div className="scanControls">
           <label>Territory
@@ -185,7 +186,25 @@ export function LeadDashboard() {
                 <option value="">Either</option><option value="yes">Available</option><option value="no">Not found</option>
               </select>
             </label>
-            <label>Pipeline stage
+            <label>Company state
+              <select value={filters.companyState ?? ""} onChange={(event) => setFilters({ ...filters, companyState: event.target.value || undefined })}>
+                <option value="">All states</option>
+                {COMPANY_STATES.map((state) => <option value={state} key={state}>{titleCase(state)}</option>)}
+              </select>
+            </label>
+            <label>Qualification
+              <select value={filters.qualificationState ?? ""} onChange={(event) => setFilters({ ...filters, qualificationState: event.target.value || undefined })}>
+                <option value="">All qualification states</option>
+                {OPPORTUNITY_QUALIFICATION_STATES.map((state) => <option value={state} key={state}>{titleCase(state)}</option>)}
+              </select>
+            </label>
+            <label>Sales stage
+              <select value={filters.salesStage ?? ""} onChange={(event) => setFilters({ ...filters, salesStage: event.target.value || undefined })}>
+                <option value="">All sales stages</option>
+                {SALES_STAGES.map((stage) => <option value={stage} key={stage}>{titleCase(stage)}</option>)}
+              </select>
+            </label>
+            <label>Legacy pipeline stage
               <select value={filters.pipelineStage ?? ""} onChange={(event) => setFilters({ ...filters, pipelineStage: event.target.value || undefined })}>
                 <option value="">All stages</option>
                 {["discovered", "qualified", "audit_ready", "demo_ready", "outreach_draft", "contacted", "replied", "meeting", "proposal", "won", "lost"].map((stage) => <option value={stage} key={stage}>{titleCase(stage)}</option>)}
@@ -200,7 +219,7 @@ export function LeadDashboard() {
 
         <section className="results" aria-labelledby="results-heading">
           <div className="resultsHeader">
-            <div><p className="eyebrow">Ranked pipeline</p><h2 id="results-heading">Qualified opportunities</h2></div>
+            <div><p className="eyebrow">Context-layer read model</p><h2 id="results-heading">Companies and opportunity candidates</h2></div>
             <a className="exportButton" href={`/api/export?${buildQuery(appliedFilters)}`}>Export CSV</a>
           </div>
 
@@ -211,16 +230,17 @@ export function LeadDashboard() {
           {!error && rows.length > 0 ? (
             <div className="tableScroll">
               <table>
-                <thead><tr><th>Business</th><th>Market</th><th>Signals</th><th>Website</th><th>Score</th><th>Stage</th><th>Public contact</th></tr></thead>
+                <thead><tr><th>Company</th><th>Company state</th><th>Operating signals</th><th>Website fact</th><th>Opportunity</th><th>Qualification</th><th>Sales / approval</th><th>Public contact</th></tr></thead>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.id}>
                       <td><strong>{row.name}</strong><span>{titleCase(row.category_id)}</span>{row.google_maps_url ? <a href={row.google_maps_url} target="_blank" rel="noreferrer">Open map ↗</a> : null}</td>
-                      <td><strong>{row.city}, {row.state}</strong><span>{row.address ?? "Address unavailable"}</span></td>
+                      <td><span className="statusPill status-unknown">{titleCase(row.company_state)}</span><strong>{row.city}, {row.state}</strong><span>{row.address ?? "Address unavailable"}</span></td>
                       <td><strong>{row.rating ? `${Number(row.rating).toFixed(1)} ★` : "No rating"}</strong><span>{row.review_count.toLocaleString()} reviews</span></td>
-                      <td><span className={`statusPill status-${row.website_status ?? "unknown"}`}>{row.lead_quality_status === "needs_reaudit" ? "Re-audit required" : titleCase(row.website_status)}</span>{row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer">Visit site ↗</a> : <span>No URL listed</span>}</td>
-                      <td><div className={`tier tier-${row.tier ?? "C"}`}>{row.tier ?? "—"}</div><strong>{row.opportunity_score ?? "—"}<small>/100</small></strong></td>
-                      <td><span className="statusPill status-unknown">{titleCase(row.pipeline_stage ?? "discovered")}</span><span>{titleCase(row.pipeline_status ?? "active")}</span></td>
+                      <td><span className={`statusPill status-${row.website_status ?? "unknown"}`}>{row.lead_quality_status === "needs_reaudit" ? "Re-audit required" : titleCase(row.website_verification_status ?? row.website_status)}</span>{row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer">Visit site ↗</a> : <span>No URL listed</span>}</td>
+                      <td><div className={`tier tier-${row.tier ?? "C"}`}>{row.tier ?? "—"}</div><strong>{row.opportunity_score ?? "—"}<small>/100 legacy</small></strong><span>Fit {row.fit_score ?? "—"} · Need {row.need_score ?? "—"}</span><span>Reach {row.reachability_score ?? "—"} · Value {row.value_score ?? "—"} · Confidence {row.confidence_score ?? "—"}</span></td>
+                      <td><span className="statusPill status-unknown">{row.opportunity_id ? titleCase(row.qualification_state) : "No opportunity"}</span><span>{row.opportunity_id ? "Qualification is separate from sales." : "Company only"}</span></td>
+                      <td><strong>{titleCase(row.sales_stage)}</strong><span>{row.pending_approval_count > 0 ? `${row.pending_approval_count} approval pending` : "No approval pending"}</span><small>Legacy: {titleCase(row.pipeline_stage)}</small></td>
                       <td>{row.primary_email ? <><a href={`mailto:${row.primary_email}`}>{row.primary_email}</a>{row.email_source_url ? <a href={row.email_source_url} target="_blank" rel="noreferrer">Verify source ↗</a> : null}</> : <span>Not found</span>}</td>
                     </tr>
                   ))}

@@ -1,6 +1,6 @@
 # NYC + NJ SMB Growth Platform
 
-Phase 1 is a working lead engine for finding strong NYC and New Jersey local businesses with weak digital presence. The current Sprint adds the Local Business Growth OS shell around it: Dashboard, Lead Pipeline, typed Orchestrator/specialist job contracts, a persistent agent-job queue boundary, and a Project Tracker foundation.
+Phase 1 is a working lead engine for finding strong NYC and New Jersey local businesses with weak digital presence. The current increment preserves that engine and adds an ontology/context layer: raw Observations are separated from canonical Facts, Company is separated from Opportunity, qualification is separated from sales stage, and Agents operate through registered actions rather than owning workflow state.
 
 Automated outreach, payments, autonomous demo publishing, client-site deployment, SEO execution, and recurring maintenance are intentionally outside this phase. Outreach remains draft-only and human-approved.
 
@@ -18,6 +18,9 @@ Automated outreach, payments, autonomous demo publishing, client-site deployment
 - Unit tests for scoring, parsing, retry behavior, website audits, and provider-independent ingestion
 - Durable lead pipeline stages, delivery projects, and idempotent agent jobs
 - One Orchestrator plus Scout, Audit, Demo Generator, Outreach Drafter, and Project Tracker contracts
+- Observation/Fact lineage plus explicit Company, Website, Contact, AuditFinding, Opportunity, Approval, DomainEvent and AuditLog records
+- A shared state-machine and Agent permission boundary in `packages/ontology`
+- Explainable Fit, Need, Reachability, Value and Confidence components while retaining the existing Opportunity Score
 - Project-scoped execution guidance for bounded planning, architecture review, checkpoint reporting, verification, and retry limits
 
 ## Prerequisites
@@ -43,7 +46,7 @@ Automated outreach, payments, autonomous demo publishing, client-site deployment
 
    `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it through a `NEXT_PUBLIC_` variable or commit `.env.local`.
 
-3. Apply both migrations in filename order. With a linked Supabase CLI project:
+3. Apply all migrations in filename order through `202609040002_ontology_state_layer.sql`. With a linked Supabase CLI project:
 
    ```bash
    supabase db push
@@ -99,6 +102,7 @@ The command never discovers new businesses or sends outreach. Failed businesses 
 - `apps/web`: Next.js admin UI and server-only API routes
 - `packages/lead-engine`: provider adapters, territory/category configuration, website audit, public-contact enrichment, and ingestion orchestration
 - `packages/scoring`: configurable scoring rules and tier thresholds
+- `packages/ontology`: authoritative business states, legal transitions, domain events and Agent action permissions
 - `supabase/migrations`: explicit relational schema, indexes, RLS, and the dashboard view
 
 See [Phase 1 architecture](docs/phase-1-architecture.md) for data flow, provider behavior, and known limits.
@@ -114,3 +118,9 @@ Growth OS planning documents:
 - [Project skills and security review](.agents/skills/README.md)
 - [Industry pilot and calibration plan](docs/industry-pilot-plan.md)
 - [Product roadmap, MVP acceptance, and early revenue](docs/product-roadmap.md)
+
+## Ontology migration safety
+
+The ontology migration is additive: it does not drop, rename or truncate legacy Lead Engine data. It backfills evidence and opportunity read models while preserving `businesses.pipeline_*`, `contact_sources` and `business_scores.opportunity_score` as compatibility fields. Validate the migration first on a non-production database and compare row counts plus sampled evidence lineage before enabling any future transition worker.
+
+Operational rollback means switching readers/writers back to the legacy compatibility fields while retaining the additive tables for diagnosis. Do not delete the new or old records as a rollback shortcut.
