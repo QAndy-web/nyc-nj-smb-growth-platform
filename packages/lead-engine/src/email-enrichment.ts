@@ -2,35 +2,56 @@ import { normalizePublicWebsiteUrl } from "./website-audit";
 import type { ContactEnrichment, ContactSource } from "./types";
 
 type Fetch = typeof fetch;
-const EMAIL_PATTERN = /[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+/gi;
+const EMAIL_PATTERN = /[a-z0-9.!#$%&'*+=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z](?:[a-z0-9-]{0,61}[a-z0-9]))+/gi;
+const VALID_EMAIL_PATTERN = /^[a-z0-9.!#$%&'*+=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z](?:[a-z0-9-]{0,61}[a-z0-9]))+$/i;
 const CONTACT_PATH = /(contact|about|team|support|get-in-touch|appointments?)/i;
 
-function cleanHtml(html: string): string {
+function visiblePageText(html: string): string {
   return html
+    .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
     .replace(/&#64;|&commat;/gi, "@")
-    .replace(/&#46;|&period;/gi, ".");
+    .replace(/&#46;|&period;/gi, ".")
+    .replace(/&nbsp;|&#160;/gi, " ");
 }
 
 function validListedEmail(email: string): boolean {
   const lower = email.toLowerCase();
-  return !lower.startsWith("noreply@") && !lower.startsWith("no-reply@") && !/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(lower);
+  return (
+    VALID_EMAIL_PATTERN.test(lower) &&
+    !lower.startsWith("noreply@") &&
+    !lower.startsWith("no-reply@") &&
+    !/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(lower)
+  );
 }
 
 export function extractPublicEmails(html: string, sourceUrl: string): ContactSource[] {
-  const cleaned = cleanHtml(html);
   const unique = new Map<string, ContactSource>();
-  for (const match of cleaned.matchAll(EMAIL_PATTERN)) {
+
+  for (const match of html.matchAll(/href=["']mailto:([^"'#?]+)(?:\?[^"']*)?["']/gi)) {
+    let decoded = match[1];
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // Keep the literal public value when malformed percent-encoding is present.
+    }
+    for (const candidate of decoded.split(/[,;]/)) {
+      const email = candidate.trim().toLowerCase();
+      if (!validListedEmail(email)) continue;
+      unique.set(email, { email, sourceUrl, extractionMethod: "mailto", confidence: "high" });
+    }
+  }
+
+  for (const match of visiblePageText(html).matchAll(EMAIL_PATTERN)) {
     const email = match[0].toLowerCase().replace(/[),.;:]+$/, "");
     if (!validListedEmail(email)) continue;
-    const isMailto = new RegExp(`mailto:${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(cleaned);
-    unique.set(email, {
-      email,
-      sourceUrl,
-      extractionMethod: isMailto ? "mailto" : "page_text",
-      confidence: isMailto ? "high" : "medium",
-    });
+    if (!unique.has(email)) {
+      unique.set(email, { email, sourceUrl, extractionMethod: "page_text", confidence: "medium" });
+    }
   }
   return [...unique.values()];
 }

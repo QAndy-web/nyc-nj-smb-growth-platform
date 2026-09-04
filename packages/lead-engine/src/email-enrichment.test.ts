@@ -22,4 +22,39 @@ describe("public contact parsing", () => {
     );
     expect(links).toEqual(["https://example.com/contact", "https://example.com/about"]);
   });
+
+  it("does not mistake URLs, package versions, or coordinates for emails", () => {
+    const contacts = extractPublicEmails(
+      `<a href="https://www.google.com/maps/place/Test/@40.73404,-74.1">Map</a>
+       <script src="https://cdn.jsdelivr.net/npm/swiper@1.8.1/index.js"></script>
+       <p>Directions: jersey+city/@40.734362</p>
+       <p>office@example.com</p>`,
+      "https://example.com/contact",
+    );
+
+    expect(contacts).toEqual([
+      {
+        email: "office@example.com",
+        sourceUrl: "https://example.com/contact",
+        extractionMethod: "page_text",
+        confidence: "medium",
+      },
+    ]);
+  });
+
+  it("prefers a public mailto link over the same email repeated in page text", () => {
+    const contacts = extractPublicEmails(
+      '<a href="mailto:Office%40Example.com?subject=Appointment">office@example.com</a>',
+      "https://example.com/contact",
+    );
+
+    expect(contacts).toEqual([
+      {
+        email: "office@example.com",
+        sourceUrl: "https://example.com/contact",
+        extractionMethod: "mailto",
+        confidence: "high",
+      },
+    ]);
+  });
 });
