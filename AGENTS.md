@@ -11,7 +11,7 @@ Build the NYC + NJ SMB Website Growth Platform as a production-quality system th
 - Keep modules independently testable and observable.
 - Preserve provider terms and rate limits. Add retries/backoff and idempotent ingestion.
 
-## Current phase: Phase 1 Lead Engine
+## Current phase: Phase 1 Lead Engine + Sprint 1 Growth OS foundation
 Implement the following production-ready foundation:
 1. Monorepo app foundation using the existing pnpm/Turborepo structure.
 2. Supabase/Postgres schema for businesses, scans, website audits, contact sources, scores, and ingestion runs.
@@ -23,6 +23,8 @@ Implement the following production-ready foundation:
 8. Admin dashboard backed by real persisted data with filters for territory, category, website status, tier, opportunity score, rating, review count, and email availability.
 9. CSV export.
 10. Tests, validation, logs, error handling, and developer documentation.
+11. Preserve the Lead Engine while adding dashboard, pipeline-stage, agent-job and project-tracking foundations.
+12. Agent execution must use one orchestrator plus explicit specialist contracts; demo sharing, outreach sending and production launch require human approval.
 
 ## Geographic scope
 NYC: Manhattan, Brooklyn, Queens, Bronx, Staten Island.
@@ -43,3 +45,13 @@ Dentists, med spas, lawyers, accountants, HVAC, plumbers, electricians, contract
 
 ## Working style
 Before major changes, inspect the repository and existing code. Prefer small coherent commits. When implementing a task, update docs if architecture or setup changes. Do not remove existing work unless required. If an assumption is uncertain, choose the safest extensible implementation and document it.
+
+## Execution discipline
+- Before implementation, report the current objective, intended scope, short plan, and how success will be verified.
+- Load only the specification sections, source files, tests, and error excerpts needed for the current step. Do not repeatedly read unchanged material.
+- Work in small, independently verifiable increments. After each completed checkpoint, report: completed work, verification evidence, and the next step.
+- Keep a compact record of failed attempts and conclusions. Do not repeat the same unsuccessful hypothesis more than twice; reassess the root cause or design before another attempt.
+- Do not rerun an already successful check when neither its inputs nor relevant code changed. Do not claim completion without fresh evidence from the checks appropriate to the change.
+
+## Project skills
+Project-scoped operating guidance lives in `.agents/skills/`. Load only the skill(s) relevant to the current task and keep this file's product, privacy, approval, and quality rules authoritative. The library is documented in `.agents/skills/README.md`; do not add a duplicate skill without first recording why the existing one is insufficient.

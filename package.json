@@ -1,0 +1,19 @@
+{
+  "name": "nyc-nj-smb-growth-platform",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "reaudit:leads": "node --import tsx apps/web/scripts/reaudit-existing-leads.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.6",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
