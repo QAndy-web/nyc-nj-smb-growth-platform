@@ -69,7 +69,7 @@ export function LeadDashboard() {
       const response = await fetch("/api/ingestion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ territoryId: scanTerritory, categoryId: scanCategory, maxCells: 1, maxPagesPerCell: 1 }),
+        body: JSON.stringify({ territoryId: scanTerritory, categoryId: scanCategory, maxCells: 1, maxPagesPerCell: 1, maxBusinesses: 10 }),
       });
       const result = (await response.json()) as { businessesUpserted?: number; errors?: number; error?: string };
       if (!response.ok) throw new Error(result.error ?? "Scan failed");
@@ -163,7 +163,7 @@ export function LeadDashboard() {
             </label>
             <label>Website
               <select value={filters.websiteStatus ?? ""} onChange={(event) => setFilters({ ...filters, websiteStatus: event.target.value || undefined })}>
-                <option value="">Any status</option><option value="missing">No website</option><option value="unreachable">Unreachable</option><option value="weak">Weak</option><option value="reachable">Healthy</option>
+                <option value="">Any status</option><option value="missing">No website</option><option value="unreachable">Unreachable</option><option value="weak">Weak</option><option value="reachable">Healthy</option><option value="unknown">Unknown / re-audit</option>
               </select>
             </label>
             <label>Tier
@@ -218,7 +218,7 @@ export function LeadDashboard() {
                       <td><strong>{row.name}</strong><span>{titleCase(row.category_id)}</span>{row.google_maps_url ? <a href={row.google_maps_url} target="_blank" rel="noreferrer">Open map ↗</a> : null}</td>
                       <td><strong>{row.city}, {row.state}</strong><span>{row.address ?? "Address unavailable"}</span></td>
                       <td><strong>{row.rating ? `${Number(row.rating).toFixed(1)} ★` : "No rating"}</strong><span>{row.review_count.toLocaleString()} reviews</span></td>
-                      <td><span className={`statusPill status-${row.website_status ?? "unknown"}`}>{titleCase(row.website_status)}</span>{row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer">Visit site ↗</a> : <span>No URL listed</span>}</td>
+                      <td><span className={`statusPill status-${row.website_status ?? "unknown"}`}>{row.lead_quality_status === "needs_reaudit" ? "Re-audit required" : titleCase(row.website_status)}</span>{row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer">Visit site ↗</a> : <span>No URL listed</span>}</td>
                       <td><div className={`tier tier-${row.tier ?? "C"}`}>{row.tier ?? "—"}</div><strong>{row.opportunity_score ?? "—"}<small>/100</small></strong></td>
                       <td><span className="statusPill status-unknown">{titleCase(row.pipeline_stage ?? "discovered")}</span><span>{titleCase(row.pipeline_status ?? "active")}</span></td>
                       <td>{row.primary_email ? <><a href={`mailto:${row.primary_email}`}>{row.primary_email}</a>{row.email_source_url ? <a href={row.email_source_url} target="_blank" rel="noreferrer">Verify source ↗</a> : null}</> : <span>Not found</span>}</td>

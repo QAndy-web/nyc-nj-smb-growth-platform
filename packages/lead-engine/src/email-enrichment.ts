@@ -1,4 +1,4 @@
-import { normalizePublicWebsiteUrl } from "./website-audit";
+import { createPublicWebsiteClient, normalizePublicWebsiteUrl } from "./public-website-fetch";
 import type { ContactEnrichment, ContactSource } from "./types";
 
 type Fetch = typeof fetch;
@@ -87,6 +87,10 @@ export async function enrichPublicBusinessContacts(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
+  const client = createPublicWebsiteClient({
+    fetchImpl,
+    userAgent: "NYCNJ-SMB-Public-Contact-Finder/1.0",
+  });
   const queue = [homepage];
   const visited = new Set<string>();
   const contacts = new Map<string, ContactSource>();
@@ -99,13 +103,8 @@ export async function enrichPublicBusinessContacts(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 7_000);
     try {
-      const response = await fetchImpl(sourceUrl, {
-        redirect: "follow",
-        signal: controller.signal,
-        headers: { "User-Agent": "NYCNJ-SMB-Public-Contact-Finder/1.0" },
-      });
+      const { response, finalUrl } = await client.fetch(sourceUrl, controller.signal);
       if (!response.ok || !(response.headers.get("content-type") ?? "").includes("text/html")) continue;
-      const finalUrl = response.url || sourceUrl;
       const html = (await response.text()).slice(0, 1_000_000);
       for (const contact of extractPublicEmails(html, finalUrl)) {
         contacts.set(`${contact.email}|${contact.sourceUrl}`, contact);

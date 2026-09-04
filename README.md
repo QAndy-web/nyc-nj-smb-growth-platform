@@ -83,6 +83,17 @@ pnpm test
 pnpm build
 ```
 
+## Re-audit existing lead data
+
+After applying `202609040001_reaudit_existing_leads.sql`, historical contacts and scores are retained but hidden from qualification until each business is re-audited with the hardened fetch/parser path. Preview the next bounded batch, then explicitly apply it:
+
+```bash
+pnpm reaudit:leads -- --limit 25
+pnpm reaudit:leads -- --apply --limit 25
+```
+
+The command never discovers new businesses or sends outreach. Failed businesses remain marked `needs_reaudit`, so the batch is safe to retry after correcting the underlying transport or site issue.
+
 ## Architecture
 
 - `apps/web`: Next.js admin UI and server-only API routes
@@ -101,3 +112,5 @@ Growth OS planning documents:
 - [Agent contracts](docs/agent-contracts.md)
 - [Sprint 1 backlog](docs/sprint-1-backlog.md)
 - [Project skills and security review](.agents/skills/README.md)
+- [Industry pilot and calibration plan](docs/industry-pilot-plan.md)
+- [Product roadmap, MVP acceptance, and early revenue](docs/product-roadmap.md)

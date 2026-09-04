@@ -41,4 +41,16 @@ describe("scoreLead", () => {
     expect(score.opportunity).toBe(score.businessQuality);
     expect(score.tier).toBe("S");
   });
+
+  it("accepts a category-specific revenue potential", () => {
+    const score = scoreLead({
+      rating: 4.5,
+      reviewCount: 100,
+      websiteStatus: "weak",
+      categoryValue: "high",
+      revenuePotential: 82,
+    });
+
+    expect(score.revenuePotential).toBe(82);
+  });
 });

@@ -89,6 +89,8 @@ export interface LeadRepository {
     enrichment: ContactEnrichment,
   ): Promise<void>;
   saveScore(businessId: string, score: LeadScore): Promise<void>;
+  markBusinessQualityNeedsReaudit(businessId: string, reason: string): Promise<void>;
+  markBusinessQualityVerified(businessId: string): Promise<void>;
   completeRun(
     runId: string,
     result: {

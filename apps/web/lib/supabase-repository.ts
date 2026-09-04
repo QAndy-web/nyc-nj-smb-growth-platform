@@ -1,6 +1,7 @@
 import type {
   BusinessRecord,
   ContactEnrichment,
+  ExistingLeadForReaudit,
   LeadRepository,
   WebsiteAudit,
 } from "@growth/lead-engine";
@@ -74,6 +75,13 @@ export class SupabaseLeadRepository implements LeadRepository {
   }
 
   async saveContactEnrichment(businessId: string, enrichment: ContactEnrichment): Promise<void> {
+    const { error: supersedeError } = await this.client
+      .from("contact_sources")
+      .update({ quality_status: "superseded", quality_reason: "replaced_by_latest_audit", quality_reviewed_at: new Date().toISOString() })
+      .eq("business_id", businessId)
+      .in("quality_status", ["pending", "accepted"]);
+    if (supersedeError) fail("Could not supersede prior public contact sources", supersedeError);
+
     if (enrichment.contacts.length === 0) return;
     const { error } = await this.client.from("contact_sources").upsert(
       enrichment.contacts.map((contact) => ({
@@ -84,8 +92,12 @@ export class SupabaseLeadRepository implements LeadRepository {
         confidence: contact.confidence,
         status: "found",
         error_message: enrichment.error,
+        quality_status: "accepted",
+        quality_reason: "current_parser_validation",
+        quality_reviewed_at: new Date().toISOString(),
+        discovered_at: new Date().toISOString(),
       })),
-      { onConflict: "business_id,email,source_url", ignoreDuplicates: true },
+      { onConflict: "business_id,email,source_url" },
     );
     if (error) fail("Could not save public contact sources", error);
   }
@@ -99,11 +111,46 @@ export class SupabaseLeadRepository implements LeadRepository {
         revenue_potential: score.revenuePotential,
         opportunity_score: score.opportunity,
         tier: score.tier,
+        scoring_version: "phase1-v2",
         scored_at: new Date().toISOString(),
       },
       { onConflict: "business_id" },
     );
     if (error) fail("Could not save opportunity score", error);
+  }
+
+  async markBusinessQualityVerified(businessId: string): Promise<void> {
+    const { error } = await this.client
+      .from("businesses")
+      .update({ lead_quality_status: "verified", quality_reason: null, quality_checked_at: new Date().toISOString() })
+      .eq("id", businessId);
+    if (error) fail("Could not mark lead quality verified", error);
+  }
+
+  async markBusinessQualityNeedsReaudit(businessId: string, reason: string): Promise<void> {
+    const { error } = await this.client
+      .from("businesses")
+      .update({ lead_quality_status: "needs_reaudit", quality_reason: reason, quality_checked_at: null })
+      .eq("id", businessId);
+    if (error) fail("Could not mark lead for quality review", error);
+  }
+
+  async listBusinessesNeedingReaudit(limit: number): Promise<Array<ExistingLeadForReaudit & { name: string }>> {
+    const { data, error } = await this.client
+      .from("businesses")
+      .select("id,name,website_url,rating,review_count,category_id")
+      .eq("lead_quality_status", "needs_reaudit")
+      .order("updated_at", { ascending: true })
+      .limit(limit);
+    if (error) fail("Could not list businesses needing re-audit", error);
+    return (data ?? []).map((row) => ({
+      businessId: row.id as string,
+      name: row.name as string,
+      websiteUrl: row.website_url as string | null,
+      rating: row.rating === null ? null : Number(row.rating),
+      reviewCount: Number(row.review_count),
+      categoryId: row.category_id as string,
+    }));
   }
 
   async completeRun(

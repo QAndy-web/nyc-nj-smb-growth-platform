@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         categoryId: body.categoryId,
         maxCells: boundedInteger(body.maxCells, 1, 5),
         maxPagesPerCell: boundedInteger(body.maxPagesPerCell, 1, 3),
+        maxBusinesses: boundedInteger(body.maxBusinesses, 10, 25),
       },
     );
     return Response.json(summary);

@@ -27,6 +27,9 @@ export type LeadRow = {
   pipeline_stage: "discovered" | "qualified" | "audit_ready" | "demo_ready" | "outreach_draft" | "contacted" | "replied" | "meeting" | "proposal" | "won" | "lost";
   pipeline_status: "active" | "paused" | "closed";
   stage_updated_at: string;
+  lead_quality_status: "verified" | "needs_reaudit";
+  quality_reason: string | null;
+  quality_checked_at: string | null;
   last_seen_at: string;
 };
 

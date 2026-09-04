@@ -1,5 +1,4 @@
-import { scoreLead } from "@growth/scoring";
-import { getCategory, getTerritory, createTerritoryGrid } from "./config";
+import { createTerritoryGrid, getCategory, getIndustryPilotProfile, getTerritory, scoreLeadForCategory } from "./config";
 import { enrichPublicBusinessContacts } from "./email-enrichment";
 import { auditWebsite } from "./website-audit";
 import type { LeadRepository, PlacesProvider } from "./types";
@@ -28,6 +27,7 @@ export type IngestionOptions = {
   maxPagesPerCell?: number;
   gridSpacingMeters?: number;
   searchRadiusMeters?: number;
+  maxBusinesses?: number;
 };
 
 export type IngestionSummary = {
@@ -61,15 +61,20 @@ export async function runIngestion(
   });
   const audit = dependencies.audit ?? auditWebsite;
   const enrich = dependencies.enrich ?? enrichPublicBusinessContacts;
+  const pilotProfile = getIndustryPilotProfile(category.id);
   const logger = dependencies.logger ?? console;
   const seenPlaceIds = new Set<string>();
   let placesFetched = 0;
   let businessesUpserted = 0;
   let errors = 0;
   let cellsScanned = 0;
+  const maxBusinesses = Math.max(1, options.maxBusinesses ?? 20);
+  let limitReached = false;
 
   try {
     for (const center of grid) {
+      if (limitReached) break;
+      cellsScanned += 1;
       let pageToken: string | undefined;
       let page = 0;
       do {
@@ -85,7 +90,15 @@ export async function runIngestion(
           pageToken = result.nextPageToken;
 
           for (const place of result.places) {
+            if (businessesUpserted >= maxBusinesses) {
+              limitReached = true;
+              break;
+            }
             if (!isInTerritory(place, territory)) continue;
+            if (
+              pilotProfile &&
+              ((place.rating ?? 0) < pilotProfile.minimumRating || place.reviewCount < pilotProfile.minimumReviews)
+            ) continue;
             if (seenPlaceIds.has(place.placeId)) continue;
             seenPlaceIds.add(place.placeId);
             try {
@@ -97,6 +110,7 @@ export async function runIngestion(
                 categoryId: category.id,
               });
               businessesUpserted += 1;
+              await dependencies.repository.markBusinessQualityNeedsReaudit(businessId, "ingestion_in_progress");
 
               const websiteAudit = await audit(place.websiteUrl);
               await dependencies.repository.saveWebsiteAudit(businessId, websiteAudit);
@@ -105,18 +119,21 @@ export async function runIngestion(
                 websiteAudit.status === "unreachable"
                   ? { status: "skipped" as const, contacts: [], pagesScanned: [], error: "Website is unreachable" }
                   : await enrich(websiteAudit.finalUrl ?? place.websiteUrl);
+              if (enrichment.status === "error") {
+                throw new Error(enrichment.error ?? "Public contact enrichment was inconclusive");
+              }
               await dependencies.repository.saveContactEnrichment(businessId, enrichment);
 
-              const score = scoreLead({
+              const score = scoreLeadForCategory(category.id, {
                 rating: place.rating,
                 reviewCount: place.reviewCount,
                 websiteStatus: websiteAudit.status,
                 mobileFriendly: websiteAudit.mobileFriendly,
                 hasClearCta: websiteAudit.hasClearCta,
                 publicEmailFound: enrichment.contacts.length > 0,
-                categoryValue: category.value,
               });
               await dependencies.repository.saveScore(businessId, score);
+              await dependencies.repository.markBusinessQualityVerified(businessId);
             } catch (error) {
               errors += 1;
               logger.warn("Business processing failed", { placeId: place.placeId, error });
@@ -129,7 +146,6 @@ export async function runIngestion(
         }
         page += 1;
       } while (pageToken && page < Math.max(1, options.maxPagesPerCell ?? 2));
-      cellsScanned += 1;
     }
 
     const status = errors > 0 ? "partial" : "completed";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractOfficialContactLinks, extractPublicEmails } from "./email-enrichment";
+import { enrichPublicBusinessContacts, extractOfficialContactLinks, extractPublicEmails } from "./email-enrichment";
 
 describe("public contact parsing", () => {
   it("extracts only emails present on the public page and keeps the source URL", () => {
@@ -56,5 +56,40 @@ describe("public contact parsing", () => {
         confidence: "high",
       },
     ]);
+  });
+
+  it("retains redirect cookies while scanning an official contact page", async () => {
+    const requests: Array<{ url: string; cookie: string | null }> = [];
+    const result = await enrichPublicBusinessContacts("https://example.com", {
+      fetchImpl: async (input, init) => {
+        const url = String(input);
+        const cookie = new Headers(init?.headers).get("cookie");
+        requests.push({ url, cookie });
+        if (requests.length === 1) {
+          return new Response(null, {
+            status: 302,
+            headers: { location: "/", "set-cookie": "site_session=ready; Path=/" },
+          });
+        }
+        if (url === "https://example.com/") {
+          return new Response('<a href="/contact">Contact</a>', {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          });
+        }
+        return new Response('<a href="mailto:hello@example.com">Email</a>', {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      },
+    });
+
+    expect(requests).toEqual([
+      { url: "https://example.com/", cookie: null },
+      { url: "https://example.com/", cookie: "site_session=ready" },
+      { url: "https://example.com/contact", cookie: "site_session=ready" },
+    ]);
+    expect(result.status).toBe("found");
+    expect(result.contacts[0]?.email).toBe("hello@example.com");
   });
 });

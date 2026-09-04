@@ -7,11 +7,11 @@
 | `businesses` | Canonical lead plus sales stage | Unique `google_place_id`; additive stage fields |
 | `ingestion_runs` | Scan history and errors | One row per bounded run |
 | `website_audits` | Historical website evidence | Append-only per check |
-| `contact_sources` | Public business email provenance | Unique business + email + source URL |
+| `contact_sources` | Public business email provenance plus reversible accepted/rejected/superseded quality state | Unique business + email + source URL |
 | `business_scores` | Current component and opportunity scores | One current versioned score per business |
 | `projects` | Won-client delivery state | References a business; progress 0–100 |
 | `agent_jobs` | Durable specialist work requests/results | Unique idempotency key; explicit status |
-| `lead_dashboard` | Pipeline read model | Latest audit/contact plus score and stage |
+| `lead_dashboard` | Pipeline read model | Latest verified audit/contact plus score, quality status and stage |
 | `project_board` | Project Tracker read model | Project joined to business identity |
 
 ## Pipeline stages
@@ -30,5 +30,7 @@
 
 1. `202608310001_phase1_lead_engine.sql`
 2. `202609030001_growth_os_foundation.sql`
+3. `202609030002_contact_quality_guard.sql`
+4. `202609040001_reaudit_existing_leads.sql`
 
 All base tables use RLS with no browser policies; server routes use the service-role credential only on the server.

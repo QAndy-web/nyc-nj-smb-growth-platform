@@ -8,6 +8,7 @@ export type LeadInputs = {
   hasClearCta?: boolean | null;
   publicEmailFound?: boolean;
   categoryValue?: "low" | "medium" | "high";
+  revenuePotential?: number;
 };
 
 export type LeadScore = {
@@ -64,7 +65,9 @@ export function scoreLead(
   }
   digitalWeakness = clamp(digitalWeakness);
 
-  const revenuePotential = config.categoryValue[input.categoryValue ?? "medium"];
+  const revenuePotential = clamp(
+    input.revenuePotential ?? config.categoryValue[input.categoryValue ?? "medium"],
+  );
   const { opportunityWeights: weights } = config;
   const contactBonus = input.publicEmailFound ? 3 : 0;
   const opportunity = clamp(

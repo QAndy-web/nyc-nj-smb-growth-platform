@@ -1,4 +1,16 @@
 import type { BusinessCategory, Coordinates, Territory } from "./types";
+import { DEFAULT_SCORING_CONFIG, scoreLead } from "@growth/scoring";
+import type { LeadInputs, LeadScore, ScoringConfig } from "@growth/scoring";
+
+export type IndustryPilotProfile = {
+  categoryId: string;
+  priority: 1 | 2 | 3;
+  minimumRating: number;
+  minimumReviews: number;
+  calibrationSample: { nyc: number; nj: number };
+  revenuePotential: number;
+  opportunityWeights: ScoringConfig["opportunityWeights"];
+};
 
 export const TERRITORIES: Territory[] = [
   { id: "manhattan", label: "Manhattan", state: "NY", city: "New York", bounds: { south: 40.7003, west: -74.0195, north: 40.882, east: -73.9067 } },
@@ -43,6 +55,38 @@ export const BUSINESS_CATEGORIES: BusinessCategory[] = [
   { id: "photographers", label: "Photographers", query: "photographer", googleType: "photographer", value: "medium" },
   { id: "tutors", label: "Tutors & training", query: "tutoring service", googleType: "educational_consultant", value: "medium" },
 ];
+
+export const INDUSTRY_PILOT_PROFILES: IndustryPilotProfile[] = [
+  { categoryId: "hvac", priority: 1, minimumRating: 4.3, minimumReviews: 30, calibrationSample: { nyc: 12, nj: 12 }, revenuePotential: 100, opportunityWeights: { businessQuality: 0.4, digitalWeakness: 0.35, revenuePotential: 0.25 } },
+  { categoryId: "plumbers", priority: 1, minimumRating: 4.3, minimumReviews: 35, calibrationSample: { nyc: 12, nj: 12 }, revenuePotential: 95, opportunityWeights: { businessQuality: 0.42, digitalWeakness: 0.35, revenuePotential: 0.23 } },
+  { categoryId: "med-spas", priority: 1, minimumRating: 4.4, minimumReviews: 40, calibrationSample: { nyc: 12, nj: 12 }, revenuePotential: 95, opportunityWeights: { businessQuality: 0.35, digitalWeakness: 0.35, revenuePotential: 0.3 } },
+  { categoryId: "lawyers", priority: 1, minimumRating: 4.3, minimumReviews: 20, calibrationSample: { nyc: 16, nj: 16 }, revenuePotential: 100, opportunityWeights: { businessQuality: 0.38, digitalWeakness: 0.32, revenuePotential: 0.3 } },
+  { categoryId: "electricians", priority: 2, minimumRating: 4.3, minimumReviews: 25, calibrationSample: { nyc: 12, nj: 12 }, revenuePotential: 90, opportunityWeights: { businessQuality: 0.43, digitalWeakness: 0.35, revenuePotential: 0.22 } },
+  { categoryId: "contractors", priority: 2, minimumRating: 4.3, minimumReviews: 20, calibrationSample: { nyc: 16, nj: 16 }, revenuePotential: 100, opportunityWeights: { businessQuality: 0.45, digitalWeakness: 0.3, revenuePotential: 0.25 } },
+  { categoryId: "accountants", priority: 2, minimumRating: 4.3, minimumReviews: 15, calibrationSample: { nyc: 12, nj: 12 }, revenuePotential: 85, opportunityWeights: { businessQuality: 0.45, digitalWeakness: 0.3, revenuePotential: 0.25 } },
+];
+
+export function getIndustryPilotProfile(categoryId: string): IndustryPilotProfile | undefined {
+  return INDUSTRY_PILOT_PROFILES.find((profile) => profile.categoryId === categoryId);
+}
+
+export function scoreLeadForCategory(
+  categoryId: string,
+  input: Omit<LeadInputs, "categoryValue" | "revenuePotential">,
+): LeadScore {
+  const category = getCategory(categoryId);
+  const profile = getIndustryPilotProfile(categoryId);
+  return scoreLead(
+    {
+      ...input,
+      categoryValue: category.value,
+      revenuePotential: profile?.revenuePotential,
+    },
+    profile
+      ? { ...DEFAULT_SCORING_CONFIG, opportunityWeights: profile.opportunityWeights }
+      : DEFAULT_SCORING_CONFIG,
+  );
+}
 
 export function getTerritory(id: string): Territory {
   const territory = TERRITORIES.find((item) => item.id === id);
